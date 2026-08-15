@@ -1,0 +1,22 @@
+schema: mcpg.dev/plugin/v1
+id: dev.mcpg.identity.ldap
+name: LDAP / Active Directory Identity Resolver
+license: BUSL-1.1
+description: |
+  Resolves caller identity from `Authorization: Basic <b64(username:password)>`
+  by binding to an LDAP / Active Directory directory *as the caller* — the
+  directory itself verifies the password — then reading the caller's group
+  memberships and projecting them into roles/groups on the gateway identity
+  context. Two modes: `direct` (template the user's DN) and `search`
+  (service-account search, then re-bind as the matched DN — the
+  Active-Directory-friendly mode). The caller's password is used only for the
+  bind and is never logged or stored. Service-account passwords are resolved
+  by the gateway secret-resolver (`${env.X}` / `vault://...` / `file://...`),
+  never committed in plaintext. Pairs with the `dev.mcpg.backend.ldap` backend.
+class: identity_provider
+runtime: native-cdylib-v1
+protocol_version: "1.0"
+required_capabilities:
+  # Binding + searching the directory issues outbound connections to the
+  # operator-configured LDAP/AD host.
+  - network_outbound

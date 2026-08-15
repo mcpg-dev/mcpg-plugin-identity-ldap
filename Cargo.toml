@@ -1,0 +1,51 @@
+[package]
+name = "mcpg-plugin-identity-ldap"
+version = "0.1.0-alpha.15"
+license = "BUSL-1.1"
+edition = "2024"
+description = """
+LDAP / Active Directory identity plugin for mcpg (dev.mcpg.identity.ldap).
+Resolves caller identity by binding to a directory *as the caller*
+(verifying the password against the directory itself) and projecting the
+caller's group memberships into roles/groups. Pairs with the `ldap` backend
+plugin (service-account search).
+"""
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["cdylib-export"]
+cdylib-export = []
+# Declared so the SDK's `declare_identity_plugin!` `build_static` accessor
+# (gated `#[cfg(feature = "static-firstparty")]`) does not trip
+# `unexpected_cfgs` in consumer compilation. Empty: consumed as a cdylib.
+static-firstparty = []
+# Gates the docker-backed OpenLDAP integration suite so plain `cargo test`
+# stays cheap. Run: `cargo test -p mcpg-plugin-identity-ldap --features integration-tests`.
+integration-tests = []
+
+[dependencies]
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+async-trait = "0.1"
+base64 = "0.22"
+# Async LDAP client. rustls with the aws-lc-rs provider (NOT native-tls —
+# deny.toml bans openssl/native-tls), matching the workspace TLS backend.
+ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-aws-lc-rs"] }
+metrics = "0.24"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+# Private current-thread runtime for the sync FFI resolve path (mirrors the
+# oidc identity plugin), plus the timeouts/net the LDAP client needs.
+tokio = { version = "1", features = ["rt", "macros", "time", "net", "sync"] }
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "net", "time"] }
+async-trait = "0.1"
+serde_json = "1.0"
+# Docker-backed OpenLDAP integration test (async runner). Dev-dep only.
+testcontainers = "0.27"
+
