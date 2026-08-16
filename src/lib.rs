@@ -68,7 +68,7 @@ fn record_resolve_outcome(result: &IdentityResolution, elapsed: Duration) {
             elapsed_ms = %elapsed.as_millis(),
             "ldap identity: no Basic credential — fall through"
         ),
-        IdentityResolution::Invalid { reason } => warn!(
+        IdentityResolution::Invalid { reason, .. } => warn!(
             reason = %reason,
             elapsed_ms = %elapsed.as_millis(),
             "ldap identity: rejected"
@@ -285,10 +285,12 @@ impl LdapIdentityPlugin {
             BindOutcome::BadCredentials | BindOutcome::UserNotFound => {
                 IdentityResolution::Invalid {
                     reason: "invalid username or password".into(),
+                    response_headers: Vec::new(),
                 }
             }
             BindOutcome::Ambiguous => IdentityResolution::Invalid {
                 reason: "ambiguous directory match for user".into(),
+                response_headers: Vec::new(),
             },
             BindOutcome::Unavailable(detail) => {
                 // Fail closed: an unverifiable credential is rejected, not
@@ -297,6 +299,7 @@ impl LdapIdentityPlugin {
                 warn!(detail = %detail, "ldap identity: directory unavailable; failing closed");
                 IdentityResolution::Invalid {
                     reason: "directory unavailable".into(),
+                    response_headers: Vec::new(),
                 }
             }
         }
@@ -389,7 +392,10 @@ impl IdentityProviderPlugin for LdapIdentityPlugin {
             let started = Instant::now();
             let result = match parse_basic(headers) {
                 ParsedBasic::None => IdentityResolution::None,
-                ParsedBasic::Invalid(reason) => IdentityResolution::Invalid { reason },
+                ParsedBasic::Invalid(reason) => IdentityResolution::Invalid {
+                    reason,
+                    response_headers: Vec::new(),
+                },
                 ParsedBasic::Credentials { username, password } => {
                     let outcome = self.authenticate(&username, &password).await;
                     self.map_outcome(outcome)
@@ -420,7 +426,10 @@ impl SyncIdentityResolver for LdapIdentityPlugin {
         // present (the no-credential fast path never blocks).
         let result = match parse_basic(headers) {
             ParsedBasic::None => IdentityResolution::None,
-            ParsedBasic::Invalid(reason) => IdentityResolution::Invalid { reason },
+            ParsedBasic::Invalid(reason) => IdentityResolution::Invalid {
+                reason,
+                response_headers: Vec::new(),
+            },
             ParsedBasic::Credentials { username, password } => {
                 let outcome = self
                     .runtime
@@ -637,7 +646,9 @@ mod tests {
             &json!({}),
         );
         match r {
-            IdentityResolution::Invalid { reason } => assert_eq!(reason, "directory unavailable"),
+            IdentityResolution::Invalid { reason, .. } => {
+                assert_eq!(reason, "directory unavailable")
+            }
             other => panic!("expected Invalid(directory unavailable), got {other:?}"),
         }
     }
