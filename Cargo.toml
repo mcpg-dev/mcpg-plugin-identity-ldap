@@ -1,6 +1,6 @@
 [package]
 name = "mcpg-plugin-identity-ldap"
-version = "0.1.0-alpha.31"
+version = "0.1.0-alpha.37"
 license = "BUSL-1.1"
 edition = "2024"
 description = """
@@ -26,10 +26,10 @@ static-firstparty = []
 integration-tests = []
 
 [dependencies]
-mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.29", version = "=0.1.0-beta.29" }
-mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.30", version = "=0.1.0-beta.30" }
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.35", version = "=0.1.0-beta.35" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.36", version = "=0.1.0-beta.36" }
 async-trait = "0.1"
-base64 = "0.22"
+base64 = "0.23"
 # Async LDAP client. rustls with the aws-lc-rs provider (NOT native-tls —
 # deny.toml bans openssl/native-tls), matching the workspace TLS backend.
 ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-aws-lc-rs"] }
