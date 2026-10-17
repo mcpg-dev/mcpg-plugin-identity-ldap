@@ -1,6 +1,6 @@
 [package]
 name = "mcpg-plugin-identity-ldap"
-version = "0.1.0-alpha.41"
+version = "0.1.0-alpha.42"
 license = "BUSL-1.1"
 edition = "2024"
 description = """
@@ -26,13 +26,17 @@ static-firstparty = []
 integration-tests = []
 
 [dependencies]
-mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.39", version = "=0.1.0-beta.39" }
-mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.40", version = "=0.1.0-beta.40" }
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.40", version = "=0.1.0-beta.40" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.41", version = "=0.1.0-beta.41" }
 async-trait = "0.1"
 base64 = "0.23"
 # Async LDAP client. rustls with the aws-lc-rs provider (NOT native-tls —
 # deny.toml bans openssl/native-tls), matching the workspace TLS backend.
 ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-aws-lc-rs"] }
+# The crypto provider the plugin installs: a build that links both rustls
+# providers has none by default, and ldap3 builds its TLS configuration
+# from the default.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 metrics = "0.24"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

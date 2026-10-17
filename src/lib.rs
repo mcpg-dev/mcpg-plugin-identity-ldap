@@ -157,6 +157,16 @@ pub struct LdapIdentityPlugin {
     runtime: Runtime,
 }
 
+/// Install the crypto provider rustls builds TLS configurations from: a
+/// build that links both rustls providers has no default, and this
+/// cdylib's copy of rustls does not see the host's.
+fn install_crypto_provider() {
+    static INSTALL: std::sync::Once = std::sync::Once::new();
+    INSTALL.call_once(|| {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    });
+}
+
 struct Inner {
     manifest: PluginManifest,
     cfg: LdapIdentityConfig,
@@ -184,6 +194,7 @@ impl LdapIdentityPlugin {
     }
 
     fn from_validated_config(cfg: LdapIdentityConfig) -> Self {
+        install_crypto_provider();
         let timeout = Duration::from_millis(cfg.timeout_ms);
         let read_attrs = cfg.read_attributes();
         let mode = match &cfg.bind {
@@ -484,6 +495,12 @@ mod tests {
             })
             .to_string(),
         )
+    }
+
+    #[test]
+    fn a_tls_configuration_can_be_built_once_the_plugin_is_made() {
+        let _plugin = direct_plugin();
+        let _ = rustls::ClientConfig::builder();
     }
 
     fn basic_header(creds: &str) -> Vec<(String, String)> {
